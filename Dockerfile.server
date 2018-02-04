@@ -1,6 +1,6 @@
 ARG osrm_version=5.16.0
-ENV OSRM_VERSION=$osrm_version
-FROM osrm/osrm-backend:$OSRM_VERSION
+
+FROM osrm/osrm-backend:$osrm_version
 
 RUN mkdir -p /data
 
