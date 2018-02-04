@@ -1,0 +1,13 @@
+ARG osrm_version=5.16.0
+ENV OSRM_VERSION=$osrm_version
+FROM osrm/osrm-backend:$OSRM_VERSION
+
+RUN mkdir -p /data
+
+WORKDIR /data
+
+# copy in the processed map data
+
+COPY data/osrm /data
+
+EXPOSE 5000

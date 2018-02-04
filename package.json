@@ -1,0 +1,56 @@
+{
+    "name": "osrm_map_puller",
+    "version": "1.0.0",
+    "config": {
+        "geofabrik_northamerica":"north-america-latest.osm.pbf",
+        "geofabrik_download":"north-america/us/oregon-latest.osm.pbf",
+        "osrm_version":"v5.15.0",
+        "poly_output":"areas/areas.osm.pbf",
+        "usa_output":"areas/conus.osm.pbf",
+        "server_port":5000
+    },
+    "description": "This is npm scripts and a Dockerfile to stand up OSRM",
+    "main": "index.js",
+    "scripts": {
+        "test": "tap test/*.js",
+        "download": "npm run download:pbfclean -s  && npm run download:pbfget",
+        "download:pbfclean": "if [ -d data -a -d data/osrm ]; then find ./data/osrm -name $npm_package_config_geofabrik_download -mtime +30 -delete; fi",
+        "download:pbfdir": "mkdir -p data/osrm",
+        "download:pbfget": "npm run download:pbfdir -s && if [ ! -e data/osrm/$npm_package_config_geofabrik_download ]; then curl --create-dirs http://download.geofabrik.de/$npm_package_config_geofabrik_download -o data/osrm/$npm_package_config_geofabrik_download; fi ",
+        "download_na": "npm run download:pbfclean -s  && npm run download:pbfget",
+        "download_na:pbfclean": "if [ -d data -a -d data/osrm ]; then find ./data/osrm -name $npm_package_config_geofabrik_northamerica -mtime +30 -delete; fi",
+        "download_na:pbfget": "npm run download:pbfdir -s && if [ ! -e data/osrm/$npm_package_config_geofabrik_download ]; then curl --create-dirs http://download.geofabrik.de/$npm_package_config_geofabrik_northamerica -o data/osrm/$npm_package_config_geofabrik_download; fi ",
+        "osrm": "npm run osrm:extract_network && npm run osrm:partition && npm run osrm:customize",
+        "osrm_polycut":"npm run osrm:usapoly && npm run osrm:extract_network_usa && npm run osrm:partition_usa && npm run osrm:customize_usa",
+        "osrm:poly":"docker run -t -v $(pwd)/data:/data osmium-tool extract -p /data/polyfiles/areas.poly /data/osrm/$npm_package_config_geofabrik_download -o /data/osrm/$npm_package_config_poly_output",
+        "osrm:usapoly":"docker run -t -v $(pwd)/data:/data osmium-tool extract -p /data/polyfiles/usa_poly.geojson /data/osrm/$npm_package_config_geofabrik_northamerica -o /data/osrm/$npm_package_config_usa_output",
+        "osrm:extract_network":"if [ ! -e data/osrm/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm ]; then docker run -t -v $(pwd)/data/osrm:/data  osrm/osrm-backend:$npm_package_config_osrm_version osrm-extract -p /opt/car.lua /data/$npm_package_config_geofabrik_download; fi",
+        "osrm:extract_network_poly":"docker run -t -v $(pwd)/data/osrm:/data  osrm/osrm-backend:$npm_package_config_osrm_version osrm-extract -p /opt/car.lua /data/$npm_package_config_poly_output",
+        "osrm:extract_network_usa":"docker run -t -v $(pwd)/data/osrm:/data  osrm/osrm-backend:$npm_package_config_osrm_version osrm-extract -p /opt/car.lua /data/$npm_package_config_usa_output",
+        "osrm:contract":"if [ ! -e data/osrm/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm.hsgr ]; then docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-contract /data/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm; fi && echo \"OSRM_GRAPH=/data/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm\" > .env",
+        "osrm:partition":"docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-partition /data/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm",
+        "osrm:customize":"docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-customize /data/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm",
+        "osrm:contract_poly":"docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-contract /data/`echo $npm_package_config_poly_output | cut -f 1 -d .`.osrm && echo \"OSRM_GRAPH=/data/`echo $npm_package_config_poly_output | cut -f 1 -d .`.osrm\" > .env",
+        "osrm:partition_usa":"docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-partition /data/$npm_package_config_usa_output",
+        "osrm:customize_usa":"docker run -t -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-customize /data/$npm_package_config_usa_output",
+        "build_osrm_server":"MAPDATE=$(stat -c '%y%' data/osrm/$npm_package_config_geofabrik_download | cut -d '.' -f 1 | sed 's/[[:space:]]/T/) docker build -t jmarca/osrm-preloaded-backend:${MAPDATE} --build-arg osrm_version=$npm_package_config_osrm_version  -f Dockerfile.server .",
+        "build_polytool":"docker build -t osmium-tool -f Dockerfile.osmium-tool .",
+        "deploy_osrm_backend":"npm run download && npm run osrm && npm run build_osrm_server && MAPDATE=$(stat -c '%y%' data/osrm/$npm_package_config_geofabrik_download | cut -d '.' -f 1 | sed 's/[[:space:]]/T/) docker run -d -p $npm_package_config_server_port:5000  jmarca/osrm-preloadeed-backend:${MAPDATE} osrm-routed --algorithm mld /data/`echo $npm_package_config_geofabrik_download | cut -f 1 -d .`.osrm",
+        "deploy_osrm_backend_usa":"npm run build_polytool && npm run download && npm run osrm_polycut && docker run -d -p $npm_package_config_server_port:5000 -v $(pwd)/data/osrm:/data osrm/osrm-backend:$npm_package_config_osrm_version osrm-routed --algorithm mld /data/$npm_package_config_usa_output"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jmarca/osrm_map_puller.git"
+    },
+    "keywords": [
+        "OSRM",
+        "OSM",
+        "geofabrik"
+    ],
+    "author": "James E. Marca",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/jmarca/osrm_map_puller/issues"
+    },
+    "homepage": "https://github.com/jmarca/osrm_map_puller#readme"
+}
