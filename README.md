@@ -85,3 +85,10 @@ package.json file:
    "osrm_frontend_zoom":"\"10\"",
 ...
 ```
+
+# Improvements
+
+Lots of tweaks can happen, including versioning using the downloaded area, as I
+said, and properly checking from the get-go whether or not there is already a
+suitable Docker image already created.  Plus perhaps command line input to make
+changing the downloaded and processed area a bit easier to do.
