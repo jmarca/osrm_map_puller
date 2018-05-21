@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "config": {
         "geofabrik_northamerica":"north-america-latest.osm.pbf",
-        "geofabrik_download":"north-america/us/oregon-latest.osm.pbf",
+        "geofabrik_oregon_download":"north-america/us/oregon-latest.osm.pbf",
+        "geofabrik_download":"north-america/us/illinois-latest.osm.pbf",
         "osrm_frontend_center":"45.418214,-122.706985",
         "osrm_frontend_zoom":"\"10\"",
         "osrm_version":"v5.15.0",
