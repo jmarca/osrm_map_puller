@@ -4,9 +4,11 @@
     "config": {
         "geofabrik_northamerica":"north-america-latest.osm.pbf",
         "geofabrik_oregon_download":"north-america/us/oregon-latest.osm.pbf",
+        "geofabrik_washington_download":"north-america/us/washington-latest.osm.pbf",
         "geofabrik_illinois_download":"north-america/us/illinois-latest.osm.pbf",
         "geofabrik_indiana_download":"north-america/us/indiana-latest.osm.pbf",
-        "geofabrik_download":"north-america/us/greater-chicago.osm.pbf",
+        "geofabrik_greater_chicago_download":"north-america/us/greater-chicago.osm.pbf",
+        "geofabrik_download":"north-america/us/greater-portland.osm.pbf",
         "osrm_frontend_center":"45.418214,-122.706985",
         "osrm_frontend_zoom":"\"10\"",
         "osrm_version":"v5.18.0",

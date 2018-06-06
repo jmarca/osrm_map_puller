@@ -46,3 +46,68 @@ the geofabrik server).  So I ran
 ```
 npm run deploy_osrm_backend
 ```
+
+
+# another example
+
+Just in the process of merging oregon and washington to get the
+Portland Metro area.
+
+first set
+
+```
+        "geofabrik_download":"north-america/us/washington-latest.osm.pbf",
+```
+
+Then run
+
+```
+npm run download
+```
+
+Then get oregon by setting
+
+```
+        "geofabrik_download":"north-america/us/oregon-latest.osm.pbf",
+```
+
+Then run again:
+
+```
+npm run download
+```
+
+Then merge the files:
+
+
+```
+pushd data/osrm/north-america/us
+docker run -it -w /wkd -v $(pwd):/wkd stefda/osmium-tool osmium merge oregon-latest.osm.pbf  washington-latest.osm.pbf -o greater-portland.osm.pbf
+```
+
+Again, seems to work okay:
+
+```
+ls -lrt
+...
+-rw-r--r-- 1 james users 141146624 Jun  5 13:52 oregon-latest.osm.pbf
+-rw-r--r-- 1 james users 114806029 Jun  5 13:55 washington-latest.osm.pbf
+-rw-r--r-- 1 root  root  255909443 Jun  5 14:01 greater-portland.osm.pbf
+```
+
+Then switch to greater-portland
+
+```
+"geofabrik_download":"north-america/us/greater-portland.osm.pbf",
+```
+
+Then "process" the osrm data
+
+```
+npm run osrm
+sudo chown james:users data -R
+npm run build_osrm_server
+```
+
+the chown command is needed because I keep forgetting to switch the
+user when running the osrm extract/massage code
